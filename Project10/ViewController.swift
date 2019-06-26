@@ -70,8 +70,27 @@ class ViewController: UICollectionViewController,UINavigationControllerDelegate,
     }
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        showEditAlertController(indexPath: indexPath)
+    }
+    
+    func showEditAlertController(indexPath: IndexPath) {
         let person = people[indexPath.item]
         
+        let ac = UIAlertController(title: "Modify Person", message: "Would you like to remove the selected person or change their name?", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "Remove", style: .destructive) {
+            [weak self] _ in
+            self?.people.remove(at: indexPath.item)
+            self?.collectionView.reloadData()
+        })
+        ac.addAction(UIAlertAction(title: "Change Name", style: .default) {
+          [weak self] _ in
+            self?.showChangeNameAlertController(person: person)
+        })
+        present(ac, animated: true)
+        
+    }
+    
+    func showChangeNameAlertController(person: Person) {
         let ac = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
         ac.addTextField()
         ac.addAction(UIAlertAction(title: "Ok", style: .default) {
