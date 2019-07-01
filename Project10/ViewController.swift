@@ -17,6 +17,13 @@ class ViewController: UICollectionViewController,UINavigationControllerDelegate,
         // Do any additional setup after loading the view.
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        let defaults = UserDefaults.standard
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            if let decodedPeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] {
+                people = decodedPeople
+            }
+        }
     }
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -52,6 +59,7 @@ class ViewController: UICollectionViewController,UINavigationControllerDelegate,
         
         let person = Person(name:"Unknown", image:imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
         
         dismiss(animated: true )
@@ -77,11 +85,14 @@ class ViewController: UICollectionViewController,UINavigationControllerDelegate,
         let person = people[indexPath.item]
         
         let ac = UIAlertController(title: "Modify Person", message: "Would you like to remove the selected person or change their name?", preferredStyle: .alert)
+        
         ac.addAction(UIAlertAction(title: "Remove", style: .destructive) {
             [weak self] _ in
             self?.people.remove(at: indexPath.item)
+            self?.save()
             self?.collectionView.reloadData()
         })
+        
         ac.addAction(UIAlertAction(title: "Change Name", style: .default) {
           [weak self] _ in
             self?.showChangeNameAlertController(person: person)
@@ -93,14 +104,24 @@ class ViewController: UICollectionViewController,UINavigationControllerDelegate,
     func showChangeNameAlertController(person: Person) {
         let ac = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
         ac.addTextField()
+        
         ac.addAction(UIAlertAction(title: "Ok", style: .default) {
             [weak self, weak ac] _ in
             guard let newName = ac?.textFields?[0].text else { return }
             person.name = newName
+            self?.save()
             self?.collectionView.reloadData()
         })
+        
         ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(ac, animated: true)
+    }
+    
+    func save() {
+        if let saveData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) {
+            let defaults = UserDefaults.standard
+            defaults.set(saveData, forKey: "people")
+        }
     }
 }
 
